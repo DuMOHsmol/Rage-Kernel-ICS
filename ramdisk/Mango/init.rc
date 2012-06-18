@@ -103,9 +103,6 @@ loglevel 3
 # This is needed by any process that uses socket tagging.
     chmod 0644 /dev/xt_qtaguid
 
-on early-fs
-    mount rootfs rootfs / rw remount
-
 on post-fs
     # once everything is setup, no need to modify /
     mount rootfs rootfs / rw remount
@@ -280,7 +277,6 @@ on boot
 
 #DooMLoRD: init.d scripts support 
     start sysinitsupport
-
 
     class_start core
     class_start main
