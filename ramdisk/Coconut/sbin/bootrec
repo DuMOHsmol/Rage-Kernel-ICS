@@ -1,0 +1,77 @@
+#!/sbin/sh
+
+if [ -e /cache/recovery/boot ]
+then
+
+rm /cache/recovery/boot
+touch /cache/recovery/enterrecovery
+
+else
+
+# trigger blue led
+echo '255' > /sys/class/leds/blue/brightness
+
+cat /dev/input/event2 > /dev/keycheck&
+sleep 3
+
+# trigger blue led
+echo '0' > /sys/class/leds/blue/brightness
+
+kill -9 $!
+
+fi
+
+
+if [ -s /dev/keycheck -o -e /cache/recovery/enterrecovery ]
+then
+# fixing CPU clocks to avoid issues in recovery
+echo 1017000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+echo 249600 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+# correct LCD-backlight brightness
+echo '255' > /sys/class/leds/lcd-backlight/brightness
+
+rm /cache/recovery/enterrecovery
+
+mount -o remount,rw rootfs /
+
+# USB fixup "mass_storage, adb"
+TAG="usb"
+VENDOR_ID=0FCE
+PID_PREFIX=6
+USB_FUNCTION=mass_storage,adb
+# generate PID based on build.prop
+PID_SUFFIX_PROP=$(/system/bin/getprop persist.usb.pid_suffix)
+PID=${PID_PREFIX}${PID_SUFFIX_PROP}
+# hardcoded PID for ARC
+#PID=614F
+# hardcoded PID for PLAY
+#PID=615D
+echo 0 > /sys/class/android_usb/android0/enable
+echo ${VENDOR_ID} > /sys/class/android_usb/android0/idVendor
+echo ${PID} > /sys/class/android_usb/android0/idProduct
+/system/bin/log -t ${TAG} -p i "usb product id: ${PID}"
+echo ${USB_FUNCTION} > /sys/class/android_usb/android0/functions
+/system/bin/log -t ${TAG} -p i "enabled usb functions: ${USB_FUNCTION}"
+echo 1 > /sys/class/android_usb/android0/enable
+/system/bin/setprop sys.usb.state ${USB_CONFIG_PROP}
+
+# shifting to "umount -l /partition" to avoid mounting issues in recovery
+umount -l /system
+umount -l /data
+umount -l /cache
+umount -l /sdcard
+umount -l /mnt/sdcard
+rm -r /sdcard
+rm -r /not/sdcard
+mkdir /sdcard
+mkdir /tmp
+rm /etc
+mkdir /etc
+cp /recovery.fstab /etc/recovery.fstab
+mount /dev/block/mmcblk0p1 /sdcard
+/sbin/recovery &
+/sbin/adbd_rec recovery 
+fi
+
+#continue booting
+
