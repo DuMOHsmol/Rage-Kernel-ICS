@@ -5,7 +5,7 @@ on early-init
     start ueventd
 
 # cpufreq defaults
-    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 1017000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 1017600
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 249600
 
 # create mountpoints
