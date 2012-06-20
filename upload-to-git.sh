@@ -1,3 +1,3 @@
 git add ./*
-git commit -m "Ver 3.1, forgot to change version number."
+git commit -m 'Ver 3.2, updated recovery by kamarush'
 git push -u origin master
